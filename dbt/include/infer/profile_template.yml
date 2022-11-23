@@ -1,0 +1,15 @@
+fixed:
+  type: infer
+prompts:
+  url:
+    hint: "the Infer api url"
+  apikey:
+    hint: "your api key"
+  username:
+    hint: "your username"
+  source:
+    hint: "default data source"
+  threads:
+    hint: "1 or more"
+    type: "int"
+    default: 1
