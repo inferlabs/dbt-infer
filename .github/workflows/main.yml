@@ -1,0 +1,108 @@
+# **what?**
+# Runs code quality checks, unit tests, and verifies python build on
+# all code committed to the repository. This workflow should not
+# require any secrets since it runs for PRs from forked repos.
+# By default, secrets are not passed to workflows running from
+# a forked repo.
+
+# **why?**
+# Ensure code for dbt meets a certain quality standard.
+
+# **when?**
+# This will run for all PRs, when code is pushed to a release
+# branch, and when manually triggered.
+
+name: Tests and Code Checks
+
+on:
+  push:
+    branches:
+      - "main"
+      - "develop"
+      - "*.latest"
+      - "releases/*"
+  pull_request:
+  workflow_dispatch:
+
+permissions: read-all
+
+# will cancel previous workflows triggered by the same event and for the same ref for PRs or same SHA otherwise
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ contains(github.event_name, 'pull_request') && github.event.pull_request.head.ref || github.sha }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash
+
+jobs:
+  code-quality:
+    name: code-quality
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.9
+
+      - name: Install python dependencies
+        run: |
+          python -m pip install --user --upgrade pip
+          python -m pip install -r dev-requirements.txt
+          python -m pip --version
+          pre-commit --version
+          mypy --version
+          dbt --version
+      - name: Run pre-commit hooks
+        run: pre-commit run --all-files --show-diff-on-failure
+
+  unit:
+    name: unit test / python ${{ matrix.python-version.setup }}
+
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: [
+          {setup: '3.7', tox: 'py37'},
+          {setup: '3.8', tox: 'py38'},
+          {setup: '3.9', tox: 'py39'},
+          {setup: '3.10', tox: 'py310'}
+        ]
+
+    env:
+      PYTEST_ADDOPTS: "-v --color=yes --csv unit_results.csv"
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v2
+        with:
+          persist-credentials: false
+
+      - name: Set up Python ${{ matrix.python-version.setup }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.python-version.setup }}
+
+      - name: Install python dependencies
+        run: |
+          python -m pip install --user --upgrade pip
+          python -m pip install tox
+          python -m pip --version
+          tox --version
+      - name: Run tox
+        env:
+          INFER_USER: ${{ secrets.INFER_USER }}
+          INFER_URL: ${{ secrets.INFER_URL }}
+          INFER_KEY: ${{ secrets.INFER_KEY }}
+          BIGQUERY_SCHEMA: ${{ secrets.BIGQUERY_SCHEMA }}
+          BIGQUERY_TEST_SERVICE_ACCOUNT_JSON: ${{ secrets.BIGQUERY_TEST_SERVICE_ACCOUNT_JSON }}
+        run: tox -e ${{ matrix.python-version.tox }}

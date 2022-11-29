@@ -1,4 +1,3 @@
-
 from setuptools import find_namespace_packages, setup
 
 setup(
@@ -11,8 +10,5 @@ setup(
     url="https://github.com/inferlabs/dbt-infer",
     packages=find_namespace_packages(include=["dbt", "dbt.*"]),
     include_package_data=True,
-    install_requires=[
-        "dbt-core>=1.2.0.",
-        "requests"
-    ],
+    install_requires=["dbt-core>=1.2.0", "requests"],
 )

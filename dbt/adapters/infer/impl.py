@@ -1,26 +1,22 @@
-
-from dbt.adapters.base import BaseAdapter
-from typing import List, Any, Optional, Tuple, Dict
-import agate
 import base64
-from dbt.contracts.connection import AdapterResponse, Connection
-from dbt.adapters.infer import InferConnectionManager
-from dbt.adapters.base.relation import BaseRelation
-from dbt.adapters.base.meta import AdapterMeta, available
-from dbt.adapters.base import Column as BaseColumn
-from dbt.adapters.factory import load_plugin
-from dbt.exceptions import NotImplementedException, RuntimeException
-from dbt.node_types import NodeType
-from dbt.contracts.graph.parsed import ParsedSeedNode
-from dbt.task.seed import SeedRunner
-from time import sleep
-from dbt.task.seed import SeedTask
-from dbt.contracts.results import RunStatus
-from dbt.main import track_run
 import io
 import os
 import uuid
-import tempfile
+from time import sleep
+from typing import Any, Dict, List, Optional, Tuple
+
+import agate
+
+from dbt.adapters.base import BaseAdapter
+from dbt.adapters.base import Column as BaseColumn
+from dbt.adapters.base.meta import available
+from dbt.adapters.base.relation import BaseRelation
+from dbt.adapters.infer import InferConnectionManager
+from dbt.clients import agate_helper
+from dbt.contracts.connection import AdapterResponse, Connection
+from dbt.contracts.results import RunStatus
+from dbt.exceptions import RuntimeException
+from dbt.task.seed import SeedTask
 
 
 class InferAdapter(BaseAdapter):
@@ -41,11 +37,11 @@ class InferAdapter(BaseAdapter):
 
     @available.parse(lambda *a, **k: (None, None))
     def add_query(
-            self,
-            sql: str,
-            auto_begin: bool = True,
-            bindings: Optional[Any] = None,
-            abridge_sql_log: bool = False,
+        self,
+        sql: str,
+        auto_begin: bool = True,
+        bindings: Optional[Any] = None,
+        abridge_sql_log: bool = False,
     ) -> Tuple[Connection, Any]:
         adapter = self.get_data_adapter()
         with adapter.connection_named("master"):
@@ -55,7 +51,7 @@ class InferAdapter(BaseAdapter):
     def date_function(cls):
         return cls.SourceAdapter.date_function()
 
-    @available.parse(lambda *a, **k: ("", empty_table()))
+    @available.parse(lambda *a, **k: ("", agate_helper.empty_table()))
     def execute(
         self, sql: str, auto_begin: bool = False, fetch: bool = False
     ) -> Tuple[AdapterResponse, agate.Table]:
@@ -66,9 +62,9 @@ class InferAdapter(BaseAdapter):
             with adapter.connection_named("master"):
                 return adapter.execute(sql, auto_begin, fetch)
         data_source = thread_connection.handle
-        session = data_source['session']
+        session = data_source["session"]
         parsed_sql = session.parse(sql)
-        if not parsed_sql['infer_commands']:
+        if not parsed_sql["infer_commands"]:
             with adapter.connection_named("master"):
                 return adapter.execute(sql, auto_begin, fetch)
 
@@ -77,41 +73,37 @@ class InferAdapter(BaseAdapter):
 
         datasets = []
         with adapter.connection_named("load_queries"):
-            for query in parsed_sql['load_queries']:
+            for query in parsed_sql["load_queries"]:
                 result = adapter.execute(query, False, True)
-                dataset_name = 'tmp_' + str(uuid.uuid4()).replace("-", "")
+                dataset_name = "tmp_" + str(uuid.uuid4()).replace("-", "")
                 fp = io.StringIO()
                 result[1].to_csv(fp)
                 encoded_fp = base64.b64encode(fp.getvalue().encode())
                 datasets.append(
                     {
-                        'base64': encoded_fp.decode(),
-                        'filename': dataset_name,
-                        'table_query': query
+                        "base64": encoded_fp.decode(),
+                        "filename": dataset_name,
+                        "table_query": query,
                     }
                 )
                 fp.close()
 
-        result_id = session.dbt_run(
-            name=f"dbt_run",
-            query=sql,
-            datasets=datasets
-        )
+        result_id = session.dbt_run(name="dbt_run", query=sql, datasets=datasets)
 
         keep_running = True
         result = {}
-        result_status = 'STARTED'
+        result_status = "STARTED"
         while keep_running:
             result_status, result = session.get_dbt_result(result_id)
-            keep_running = (result_status in ['STARTED', 'RUNNING'])
+            keep_running = result_status in ["STARTED", "RUNNING"]
             sleep(3)
-        if result_status == 'ERROR':
+        if result_status == "ERROR":
             raise RuntimeException(f"Failed to run SQL-inf command sql={sql}")
         if not result:
             raise RuntimeException(f"Failed to get result for SQL-inf command sql={sql}")
 
-        temp_table_name = 'tmp_infer_' + str(uuid.uuid4()).replace("-", "")
-        output_file_path = f'seeds/{temp_table_name}.csv'
+        temp_table_name = "tmp_infer_" + str(uuid.uuid4()).replace("-", "")
+        output_file_path = f"seeds/{temp_table_name}.csv"
         with open(output_file_path, "w+b") as fp:
             fp.write(result)
 
@@ -131,8 +123,10 @@ class InferAdapter(BaseAdapter):
         os.remove(output_file_path)
 
         with adapter.connection_named("upload_infer_results"):
-            full_temp_table_name = f'{adapter.config.credentials.schema}.{temp_table_name}'
-            outer_sql = parsed_sql['outer'].replace('__INNER_SELECT__', f'SELECT * FROM {full_temp_table_name}')
+            full_temp_table_name = f"{adapter.config.credentials.schema}.{temp_table_name}"
+            outer_sql = parsed_sql["outer"].replace(
+                "__INNER_SELECT__", f"SELECT * FROM {full_temp_table_name}"
+            )
             outer_result = adapter.execute(outer_sql, False, True)
 
             database = adapter.config.credentials.database
@@ -141,8 +135,8 @@ class InferAdapter(BaseAdapter):
                 database=database,
                 schema=schema,
                 identifier=temp_table_name,
-                type='table',
-                quote_policy=adapter.config.quoting
+                type="table",
+                quote_policy=adapter.config.quoting,
             )
 
         adapter.drop_relation(relation)
@@ -152,7 +146,7 @@ class InferAdapter(BaseAdapter):
     def get_data_adapter(self):
         if not self.data_adapter:
             data_source = self.connections.get_thread_connection().handle
-            self.data_adapter = data_source['data_adapter'](self.config)
+            self.data_adapter = data_source["data_adapter"](self.config)
         return self.data_adapter
 
     @available.parse(lambda *a, **k: {})
@@ -165,7 +159,7 @@ class InferAdapter(BaseAdapter):
         return data_adapter.execute_macro(
             f"{data_adapter.type()}__{macro}",
             kwargs=macro_dict,
-            manifest=data_adapter._macro_manifest
+            manifest=data_adapter._macro_manifest,
         )
 
     @available.parse(lambda *a, **k: {})
@@ -180,14 +174,14 @@ class InferAdapter(BaseAdapter):
             return adapter.list_relations_without_caching(schema_relation)
 
     def __getattribute__(self, item):
-        if item == '_available_':
+        if item == "_available_":
             adapter = self.get_data_adapter()
             return frozenset().union(adapter._available_, object.__getattribute__(self, item))
-        if item == 'database':
+        if item == "database":
             return self.data_config.database
-        elif item == 'schema':
+        elif item == "schema":
             return self.data_config.schema
-        elif item == 'project':
+        elif item == "project":
             return self.data_config.project.strip("\"'")
         return object.__getattribute__(self, item)
 
@@ -195,9 +189,7 @@ class InferAdapter(BaseAdapter):
         return getattr(self.get_data_adapter(), name)
 
     @available.parse(lambda *a, **k: True)
-    def is_replaceable(
-            self, relation, conf_partition, conf_cluster
-    ) -> bool:
+    def is_replaceable(self, relation, conf_partition, conf_cluster) -> bool:
         adapter = self.get_data_adapter()
         return adapter.is_replaceable(relation, conf_partition, conf_cluster)
 
@@ -254,7 +246,7 @@ class InferAdapter(BaseAdapter):
     def quote(cls, identifier: str) -> str:
         return cls.SourceAdapter.quote(identifier)
 
-    def quote(self, identifier):
+    def quote(self, identifier: str) -> str:
         return self.get_data_adapter().quote(identifier)
 
     def expand_column_types(self, goal: BaseRelation, current: BaseRelation) -> None:

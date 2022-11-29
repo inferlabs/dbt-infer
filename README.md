@@ -16,44 +16,44 @@
 
 # dbt-infer
 
-The [dbt](https://www.getdbt.com) adapter for [Infer](https://www.getinfer.io/). 
+The [dbt](https://www.getdbt.com) adapter for [Infer](https://www.getinfer.io/).
 `dbt-infer` allows you to connect your dbt instance to Infer and use **SQL-inf** syntax in your dbt models.
 
-`dbt-infer` acts as a layer between your existing data warehouse and your dbt instance, enabling you to perform 
+`dbt-infer` acts as a layer between your existing data warehouse and your dbt instance, enabling you to perform
 advanced analytics and machine learning within your dbt models.
 
 ## SQL-inf
 
 SQL-inf is an extension of SQL that introduces machine learning primitives to SQL.
-These primitives can be used within any part of your SQL queries, or DBT models, and allow you to build advanced 
+These primitives can be used within any part of your SQL queries, or DBT models, and allow you to build advanced
 analytics use cases using them as building blocks.
 
 Read more about SQL-inf [here](https://docs.getinfer.io/docs/reference).
 
 ### Examples
 
-Some illustrative examples based on an idealised table `users` with some simple demographic data, whether the user has 
+Some illustrative examples based on an idealised table `users` with some simple demographic data, whether the user has
 churned or not, their lifetime value(LTV) and a text field with customer feedback.
 
 More examples and tutorials [here](https://docs.getinfer.io/docs/tutorial/intro).
 
 Predict column `has_churn` from the other columns in the table `users`.
-```sql 
-SELECT * FROM users PREDICT(has_churned) 
+```sql
+SELECT * FROM users PREDICT(has_churned)
 ```
 
-Understand what columns drive values of `has_churned` 
+Understand what columns drive values of `has_churned`
 ```sql
 SELECT * FROM users EXPLAIN(PREDICT(has_churned))
 ```
 
 Predict and understand the LTV in column `ltv` from table `users`.
-```sql 
-SELECT * FROM users PREDICT(ltv) 
+```sql
+SELECT * FROM users PREDICT(ltv)
 ```
 
-```sql 
-SELECT * FROM users EXPLAIN(PREDICT(ltv)) 
+```sql
+SELECT * FROM users EXPLAIN(PREDICT(ltv))
 ```
 
 Perform text analysis, sentiment and topic analysis, on user feedback
@@ -81,7 +81,7 @@ SELECT cluster_id, COUNT(*) as size FROM (
 ```
 
 
-Find users similar to the user with `user_id=123` 
+Find users similar to the user with `user_id=123`
 
 ```sql
 SELECT * FROM users SIMILAR_TO(user_id=123)
@@ -127,4 +127,3 @@ Setup a target in your profile for `dbt-infer` with the following shape
     <here goes your normal data warehouse config>
 ```
 where `data_config` contains the profile settings for your underlying data warehouse.
-
