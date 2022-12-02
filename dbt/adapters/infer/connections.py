@@ -1,3 +1,4 @@
+import json
 import os
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -150,6 +151,8 @@ class InferSession:
                     f"got return code {r.status_code}"
                 )
             rtn_obj = r.content
+        elif r_status == "ERROR":
+            rtn_obj = r_json["raw_output"]
         return r_status, rtn_obj
 
     def get_result(self, result_id):

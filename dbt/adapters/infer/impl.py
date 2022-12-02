@@ -15,8 +15,11 @@ from dbt.adapters.infer import InferConnectionManager
 from dbt.clients import agate_helper
 from dbt.contracts.connection import AdapterResponse, Connection
 from dbt.contracts.results import RunStatus
+from dbt.events import AdapterLogger
 from dbt.exceptions import RuntimeException
 from dbt.task.seed import SeedTask
+
+logger = AdapterLogger("Infer")
 
 
 class InferAdapter(BaseAdapter):
@@ -64,6 +67,10 @@ class InferAdapter(BaseAdapter):
         data_source = thread_connection.handle
         session = data_source["session"]
         parsed_sql = session.parse(sql)
+        if parsed_sql.get("errors", None):
+            error = parsed_sql["errors"][0]
+            logger.info(f"Failed to parse SQL as SQL-inf: ({error['type']}) {error['value']}")
+            logger.info(f"Will try to process with {adapter.__class__.__name__}.")
         if not parsed_sql["infer_commands"]:
             with adapter.connection_named("master"):
                 return adapter.execute(sql, auto_begin, fetch)
@@ -98,7 +105,10 @@ class InferAdapter(BaseAdapter):
             keep_running = result_status in ["STARTED", "RUNNING"]
             sleep(3)
         if result_status == "ERROR":
-            raise RuntimeException(f"Failed to run SQL-inf command sql={sql}")
+            raise RuntimeException(
+                f"Failed to run SQL-inf command: "
+                f"({result.get('type', 'Unknown Internal Error')}) {result.get('error', '')}"
+            )
         if not result:
             raise RuntimeException(f"Failed to get result for SQL-inf command sql={sql}")
 
