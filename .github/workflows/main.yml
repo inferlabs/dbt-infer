@@ -69,7 +69,7 @@ jobs:
     runs-on: ubuntu-latest
 
     strategy:
-      fail-fast: false
+      fail-fast: true
       max-parallel: 1
       matrix:
         python-version: [
