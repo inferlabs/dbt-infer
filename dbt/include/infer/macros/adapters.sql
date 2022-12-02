@@ -9,9 +9,12 @@
     {% do return(adapter.adapter_macro('create_view_as', {'relation': relation, 'sql': '(' + sql + ')'})) %}
 {% endmacro %}
 
-{% macro infer__create_table_as(temporary, relation, sql) -%}
+{% macro infer__create_table_as(temporary, relation, compiled_code, language='sql') -%}
     {% do adapter.set_create_view_mode(False) %}
-    {% do return(adapter.adapter_macro('create_table_as', {'temporary': temporary, 'relation': relation, 'sql': sql})) %}
+    {% do return(adapter.adapter_macro(
+        'create_table_as',
+        {'temporary': temporary, 'relation': relation, 'compiled_code': compiled_code, 'language': language}))
+    %}
 {% endmacro %}
 
 {% macro infer__generate_schema_name(custom_schema_name, node) -%}

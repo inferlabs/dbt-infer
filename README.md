@@ -15,22 +15,22 @@ The [dbt](https://www.getdbt.com) adapter for [Infer](https://www.getinfer.io/).
 `dbt-infer` allows you to connect your dbt instance to Infer and use **SQL-inf** syntax in your dbt models.
 
 `dbt-infer` acts as a layer between your existing data warehouse and your dbt instance, enabling you to perform
-advanced analytics and machine learning within your dbt models.
+ML analytics within your dbt models.
 
 ## SQL-inf
 
 SQL-inf is an extension of SQL that introduces machine learning primitives to SQL.
-These primitives can be used within any part of your SQL queries, or DBT models, and allow you to build advanced
-analytics use cases using them as building blocks.
+These primitives can be used within any part of your SQL queries, or DBT models, and allow you to build ML
+analytics use cases.
 
 Read more about SQL-inf [here](https://docs.getinfer.io/docs/reference).
 
 ### Examples
 
-Some illustrative examples based on an idealised table `users` with some simple demographic data, whether the user has
+Illustrative example based on an idealised table `users` with some simple demographic data, whether the user has
 churned or not, their lifetime value(LTV) and a text field with customer feedback.
 
-More examples and tutorials [here](https://docs.getinfer.io/docs/tutorial/intro).
+More examples and tutorials available [here](https://docs.getinfer.io/docs/tutorial/intro).
 
 Predict column `has_churn` from the other columns in the table `users`.
 ```sql
