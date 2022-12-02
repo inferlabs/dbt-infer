@@ -1,4 +1,10 @@
 
 [build-system]
 requires = ["setuptools"]
-build-backend = "setuptools.build"
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dbt-infer"
+description = "The Infer adapter plugin for dbt"
+readme = "README.md"
+requires-python = ">=3.7"
