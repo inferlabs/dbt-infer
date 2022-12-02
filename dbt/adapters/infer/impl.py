@@ -105,10 +105,13 @@ class InferAdapter(BaseAdapter):
             keep_running = result_status in ["STARTED", "RUNNING"]
             sleep(3)
         if result_status == "ERROR":
-            raise RuntimeException(
-                f"Failed to run SQL-inf command: "
-                f"({result.get('type', 'Unknown Internal Error')}) {result.get('error', '')}"
-            )
+            if result:
+                raise RuntimeException(
+                    f"Failed to run SQL-inf command: "
+                    f"({result.get('type', 'Unknown Internal Error')}) {result.get('error', '')}"
+                )
+            else:
+                raise RuntimeException(f"Failed to run SQL-inf command: Internal Error")
         if not result:
             raise RuntimeException(f"Failed to get result for SQL-inf command sql={sql}")
 

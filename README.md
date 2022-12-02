@@ -102,7 +102,7 @@ You should be using dbt 1.2 or later.
 
 First you need to setup your Infer account and generate your api key.
 
-Read about how to do that [here](/docs/reference/api).
+Read about how to do that [here](https://docs.getinfer.io/docs/reference/api).
 
 ### Install `dbt-infer`
 ```shell
