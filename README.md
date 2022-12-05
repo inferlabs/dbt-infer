@@ -17,6 +17,8 @@ The [dbt](https://www.getdbt.com) adapter for [Infer](https://www.getinfer.io/).
 `dbt-infer` acts as a layer between your existing data warehouse and your dbt instance, enabling you to perform
 advanced analytics and machine learning within your dbt models.
 
+`dbt-infer` packages are hosted on [PyPi](https://github.com/inferlabs/dbt-infer).
+
 ## SQL-inf
 
 SQL-inf is an extension of SQL that introduces machine learning primitives to SQL.
