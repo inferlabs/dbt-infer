@@ -94,7 +94,7 @@ SELECT age, location, gender, job, education, prediction FROM (
 
 ## Installation
 
-Detailed installation and setup guide [here](https://docs.getinfer.io/docs/reference/dbt).
+Detailed installation and setup guide [here](https://dbt.getinfer.io/docs/getting_started).
 
 ### Requirements
 
