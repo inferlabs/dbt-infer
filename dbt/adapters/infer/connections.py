@@ -142,8 +142,10 @@ class InferSession:
         r_json = r.json()
         r_status = r_json["status"]
         rtn_obj = None
+        info = []
         if r_status == "COMPLETED":
             url = f"{self.__baseurl}{r_json['output_url']}"
+            info = r_json.get("info", [])
             r = self.__session.get(url)
             if r.status_code != 200:
                 raise RuntimeError(
@@ -153,7 +155,7 @@ class InferSession:
             rtn_obj = r.content
         elif r_status == "ERROR":
             rtn_obj = r_json["raw_output"]
-        return r_status, rtn_obj
+        return r_status, rtn_obj, info
 
     def get_result(self, result_id):
         r = self.__session.get(f"{self.__url}/results/{result_id}")
