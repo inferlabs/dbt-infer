@@ -54,6 +54,25 @@ class InferAdapter(BaseAdapter):
     def date_function(cls):
         return cls.SourceAdapter.date_function()
 
+    def upload_data_to_table(self, table_name, result, adapter):
+        output_file_path = f"seeds/{table_name}.csv"
+        with open(output_file_path, "w+b") as fp:
+            fp.write(result)
+
+        class SeedArgs:
+            state = None
+            single_threaded = True
+            selector_name = None
+            select = [table_name]
+            exclude = None
+            show = None
+
+        task = SeedTask(SeedArgs(), adapter.config)
+        r = task.run()
+        if r.results[0].status == RunStatus.Error:
+            raise RuntimeException(r.results[0].message)
+        os.remove(output_file_path)
+
     @available.parse(lambda *a, **k: ("", agate_helper.empty_table()))
     def execute(
         self, sql: str, auto_begin: bool = False, fetch: bool = False
@@ -100,8 +119,9 @@ class InferAdapter(BaseAdapter):
         keep_running = True
         result = {}
         result_status = "STARTED"
+        result_info = []
         while keep_running:
-            result_status, result = session.get_dbt_result(result_id)
+            result_status, result, result_info = session.get_dbt_result(result_id)
             keep_running = result_status in ["STARTED", "RUNNING"]
             sleep(3)
         if result_status == "ERROR":
@@ -114,26 +134,12 @@ class InferAdapter(BaseAdapter):
                 raise RuntimeException(f"Failed to run SQL-inf command: Internal Error")
         if not result:
             raise RuntimeException(f"Failed to get result for SQL-inf command sql={sql}")
+        for info in result_info:
+            logger.info(f"Infer {info['type']}: {info['msg']}")
 
         temp_table_name = "tmp_infer_" + str(uuid.uuid4()).replace("-", "")
-        output_file_path = f"seeds/{temp_table_name}.csv"
-        with open(output_file_path, "w+b") as fp:
-            fp.write(result)
 
-        class SeedArgs:
-            state = None
-            single_threaded = True
-            selector_name = None
-            select = [temp_table_name]
-            exclude = None
-            show = None
-
-        task = SeedTask(SeedArgs(), adapter.config)
-        r = task.run()
-        if r.results[0].status == RunStatus.Error:
-            raise RuntimeException(r.results[0].message)
-
-        os.remove(output_file_path)
+        self.upload_data_to_table(temp_table_name, result, adapter)
 
         with adapter.connection_named("upload_infer_results"):
             full_temp_table_name = f"{adapter.config.credentials.schema}.{temp_table_name}"

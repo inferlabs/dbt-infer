@@ -17,6 +17,8 @@ The [dbt](https://www.getdbt.com) adapter for [Infer](https://www.getinfer.io/).
 `dbt-infer` acts as a layer between your existing data warehouse and your dbt instance, enabling you to perform
 ML analytics within your dbt models.
 
+`dbt-infer` packages are hosted on [PyPi](https://github.com/inferlabs/dbt-infer).
+
 ## SQL-inf
 
 SQL-inf is an extension of SQL that introduces machine learning primitives to SQL.
@@ -92,7 +94,7 @@ SELECT age, location, gender, job, education, prediction FROM (
 
 ## Installation
 
-Detailed installation and setup guide [here](https://docs.getinfer.io/docs/reference/dbt).
+Detailed installation and setup guide [here](https://dbt.getinfer.io/docs/getting_started).
 
 ### Requirements
 
