@@ -16,7 +16,7 @@ from dbt.clients import agate_helper
 from dbt.contracts.connection import AdapterResponse, Connection
 from dbt.contracts.results import RunStatus
 from dbt.events import AdapterLogger
-from dbt.exceptions import RuntimeException
+from dbt.exceptions import DbtRuntimeError as RuntimeException
 from dbt.task.seed import SeedTask
 
 logger = AdapterLogger("Infer")

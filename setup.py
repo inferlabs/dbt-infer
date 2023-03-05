@@ -8,7 +8,7 @@ with open(os.path.join(this_directory, "README.md")) as f:
 
 setup(
     name="dbt-infer",
-    version="1.2.0",
+    version="1.4.0",
     description="The Infer adapter plugin for dbt",
     long_description=long_description,
     long_description_content_type="text/markdown",
