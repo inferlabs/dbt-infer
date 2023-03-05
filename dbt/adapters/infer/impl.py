@@ -55,7 +55,13 @@ class InferAdapter(BaseAdapter):
         return cls.SourceAdapter.date_function()
 
     def upload_data_to_table(self, table_name, result, adapter):
-        output_file_path = f"seeds/{table_name}.csv"
+        seed_paths = self.config.seed_paths
+        seed_path = seed_paths[0] if seed_paths else "seeds"
+        project_root = self.config.project_root
+        output_file_path = f"{seed_path}/{table_name}.csv"
+        full_seed_path = os.path.join(project_root, seed_path)
+        if not os.path.exists(full_seed_path):
+            os.makedirs(full_seed_path)
         with open(output_file_path, "w+b") as fp:
             fp.write(result)
 
