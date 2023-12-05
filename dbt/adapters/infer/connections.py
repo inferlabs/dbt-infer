@@ -85,7 +85,9 @@ class InferSession:
         url = f"{credentials.url}/api/v1"
         r = session.get(f"{url}/users/me")
         if r.status_code != 200:
-            raise RuntimeError(f"Failed to connect to Infer server {url} end point 'users/me'")
+            raise RuntimeError(
+                f'Failed to connect to Infer server {url} end point "/users/me" {r.text}'
+            )
         self.__baseurl = credentials.url
         self.__url = url
         self.__session = session
@@ -98,19 +100,6 @@ class InferSession:
                 f"point 'parse' got return code {r.status_code}"
             )
         return r.json()["result"]
-
-    def single_dataset_run(self, dataset_id, name, query):
-        r = self.__session.post(
-            f"{self.__url}/datasets/{dataset_id}/results",
-            json={"result": {"name": name, "query": query}},
-        )
-        if r.status_code != 200:
-            raise RuntimeError(
-                f"Failed to connect to Infer server {self.__url} "
-                f"to run query={query} on dataset_id={dataset_id} "
-                f"got return code {r.status_code}"
-            )
-        return r.json()["id"]
 
     def dbt_run(self, name, query, datasets):
         r = self.__session.post(
@@ -157,53 +146,6 @@ class InferSession:
             rtn_obj = r_json["raw_output"]
         return r_status, rtn_obj, info
 
-    def get_result(self, result_id):
-        r = self.__session.get(f"{self.__url}/results/{result_id}")
-        if r.status_code != 200:
-            raise RuntimeError(
-                f"Failed to connect to Infer server {self.__url} "
-                f"to retrieve result_id={result_id} "
-                f"got return code {r.status_code}"
-            )
-        r_json = r.json()
-        r_status = r_json["status"]
-        rtn_obj = None
-        if r_status == "COMPLETED":
-            url = f"{self.__baseurl}{r_json['result_url']}"
-            r = self.__session.get(url)
-            if r.status_code != 200:
-                raise RuntimeError(
-                    f"Failed to connect to retrieve result {url} "
-                    f"got return code {r.status_code}"
-                )
-            rtn_obj = r.content
-        return r_status, rtn_obj
-
-    def delete_dataset(self, dataset_id):
-        r = self.__session.delete(f"{self.__url}/datasets/{dataset_id}")
-        if r.status_code not in [200, 204]:
-            raise RuntimeError(
-                f"Failed to connect to Infer server {self.__url} "
-                f"end point 'datasets/{dataset_id}' got "
-                f"return code {r.status_code}"
-            )
-
-    def create_dataset(self, name, query, encode_data):
-        data = {
-            "dataset": {
-                "name": name,
-                "description": query,
-                "source_file": {"data": encode_data},
-            }
-        }
-        r = self.__session.post(f"{self.__url}/datasets", json=data)
-        if r.status_code != 200:
-            raise RuntimeError(
-                f"Failed to connect to Infer server {self.__url} "
-                f"end point 'datasets' got return code {r.status_code}"
-            )
-        return r.json()["id"]
-
     def close(self):
         self.__session.close()
 
@@ -244,6 +186,7 @@ class InferConnectionManager(BaseConnectionManager):
                 "data_adapter": data_adapter,
             }
         except Exception as e:
+            connection.state = "closed"
             raise e
         return connection
 

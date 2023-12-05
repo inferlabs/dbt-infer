@@ -96,6 +96,8 @@ class InferAdapter(BaseAdapter):
             error = parsed_sql["errors"][0]
             logger.info(f"Failed to parse SQL as SQL-inf: ({error['type']}) {error['value']}")
             logger.info(f"Will try to process with {adapter.__class__.__name__}.")
+        if "infer_commands" not in parsed_sql:
+            raise RuntimeException(f"Failed to parse SQL as SQL-inf error={parsed_sql}")
         if not parsed_sql["infer_commands"]:
             with adapter.connection_named("master"):
                 return adapter.execute(sql, auto_begin, fetch)
