@@ -75,6 +75,8 @@ class InferAdapter(BaseAdapter):
             show = None
             selector = None
             populate_cache = None
+            defer_state = None
+            write_json = None
 
         from dbt.parser.manifest import ManifestLoader
 

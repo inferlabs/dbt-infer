@@ -8,7 +8,7 @@ with open(os.path.join(this_directory, "README.md")) as f:
 
 setup(
     name="dbt-infer",
-    version="1.5.0",
+    version="1.6.0",
     description="The Infer adapter plugin for dbt",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -17,7 +17,7 @@ setup(
     url="https://github.com/inferlabs/dbt-infer",
     packages=find_namespace_packages(include=["dbt", "dbt.*"]),
     include_package_data=True,
-    install_requires=["dbt-core>=1.5.0", "requests"],
+    install_requires=["dbt-core>=1.6.0", "requests"],
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "License :: OSI Approved :: Apache Software License",
