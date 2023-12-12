@@ -20,6 +20,11 @@ def profile_from_dict(profile, profile_name, cli_vars="{}"):
         cli_vars = parse_cli_vars(cli_vars)
 
     renderer = ProfileRenderer(cli_vars)
+    from argparse import Namespace
+
+    from dbt.flags import set_from_args
+
+    set_from_args(Namespace(), None)
     return Profile.from_raw_profile_info(
         profile,
         profile_name,
@@ -51,6 +56,10 @@ def config_from_parts_or_dicts(project, profile, packages=None, selectors=None, 
     from copy import deepcopy
 
     from dbt.config import Profile, Project, RuntimeConfig
+    from dbt.config.utils import parse_cli_vars
+
+    if not isinstance(cli_vars, dict):
+        cli_vars = parse_cli_vars(cli_vars)
 
     if isinstance(project, Project):
         profile_name = project.profile_name
@@ -79,7 +88,7 @@ def config_from_parts_or_dicts(project, profile, packages=None, selectors=None, 
     return RuntimeConfig.from_parts(project=project, profile=profile, args=args)
 
 
-class TestRedshiftAdapter(unittest.TestCase):
+class TestInferAdapter(unittest.TestCase):
     def setUp(self):
         profile_cfg = {
             "outputs": {

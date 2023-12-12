@@ -55,6 +55,7 @@ class InferAdapter(BaseAdapter):
         return cls.SourceAdapter.date_function()
 
     def upload_data_to_table(self, table_name, result, adapter):
+        logger.info(f"Uploading data to {table_name}")
         seed_paths = self.config.seed_paths
         seed_path = seed_paths[0] if seed_paths else "seeds"
         project_root = self.config.project_root
@@ -72,9 +73,18 @@ class InferAdapter(BaseAdapter):
             select = [table_name]
             exclude = None
             show = None
+            selector = None
+            populate_cache = None
 
-        task = SeedTask(SeedArgs(), adapter.config)
+        from dbt.parser.manifest import ManifestLoader
+
+        manifest = ManifestLoader.get_full_manifest(adapter.config)
+
+        logger.info(f"Creating SeedTask")
+        task = SeedTask(SeedArgs(), adapter.config, manifest)
+        logger.info(f"Running Task")
         r = task.run()
+        logger.info(f"Task finished")
         if r.results[0].status == RunStatus.Error:
             raise RuntimeException(r.results[0].message)
         os.remove(output_file_path)
@@ -100,6 +110,7 @@ class InferAdapter(BaseAdapter):
             raise RuntimeException(f"Failed to parse SQL as SQL-inf error={parsed_sql}")
         if not parsed_sql["infer_commands"]:
             with adapter.connection_named("master"):
+                logger.info(f"Executing SQL using {adapter.__class__.__name__}")
                 return adapter.execute(sql, auto_begin, fetch)
 
         if self.create_view_mode:
@@ -107,10 +118,13 @@ class InferAdapter(BaseAdapter):
 
         datasets = []
         with adapter.connection_named("load_queries"):
+            logger.info(f"Executing inner load queries for SQL-inf query")
             for query in parsed_sql["load_queries"]:
+                logger.info(f"Executing inner query {query} using {adapter.__class__.__name__}")
                 result = adapter.execute(query, False, True)
                 dataset_name = "tmp_" + str(uuid.uuid4()).replace("-", "")
                 fp = io.StringIO()
+                logger.info(f"Saving output to file")
                 result[1].to_csv(fp)
                 encoded_fp = base64.b64encode(fp.getvalue().encode())
                 datasets.append(
@@ -122,16 +136,19 @@ class InferAdapter(BaseAdapter):
                 )
                 fp.close()
 
+        logger.info(f"Executing SQL-inf query")
         result_id = session.dbt_run(name="dbt_run", query=sql, datasets=datasets)
 
         keep_running = True
         result = {}
         result_status = "STARTED"
         result_info = []
+        logger.info(f"Query execution started - waiting for results")
         while keep_running:
             result_status, result, result_info = session.get_dbt_result(result_id)
             keep_running = result_status in ["STARTED", "RUNNING"]
             sleep(3)
+        logger.info(f"Query execution finished - parsing results")
         if result_status == "ERROR":
             if result:
                 raise RuntimeException(
@@ -154,6 +171,7 @@ class InferAdapter(BaseAdapter):
             outer_sql = parsed_sql["outer"].replace(
                 "__INNER_SELECT__", f"SELECT * FROM {full_temp_table_name}"
             )
+            logger.info(f"Executing out query {outer_sql} using {adapter.__class__.__name__}")
             outer_result = adapter.execute(outer_sql, False, True)
 
             database = adapter.config.credentials.database

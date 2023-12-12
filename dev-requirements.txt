@@ -1,7 +1,7 @@
 
-dbt-core==1.4.4
-dbt-tests-adapter==1.4.4
-dbt-bigquery==1.4.1
+dbt-core==1.5.9
+dbt-tests-adapter==1.5.9
+dbt-bigquery==1.5.7
 black==22.8.0
 bumpversion==0.6.0
 flake8
