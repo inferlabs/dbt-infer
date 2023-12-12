@@ -25,14 +25,12 @@ SQL-inf is an extension of SQL that introduces machine learning primitives to SQ
 These primitives can be used within any part of your SQL queries, or DBT models, and allow you to build ML
 analytics use cases.
 
-Read more about SQL-inf [here](https://docs.getinfer.io/docs/reference).
+Read more about SQL-inf [here](https://docs.getinfer.io).
 
 ### Examples
 
 Illustrative example based on an idealised table `users` with some simple demographic data, whether the user has
 churned or not, their lifetime value(LTV) and a text field with customer feedback.
-
-More examples and tutorials available [here](https://docs.getinfer.io/docs/tutorial/intro).
 
 Predict column `has_churn` from the other columns in the table `users`.
 ```sql
@@ -94,7 +92,7 @@ SELECT age, location, gender, job, education, prediction FROM (
 
 ## Installation
 
-Detailed installation and setup guide [here](https://dbt.getinfer.io/docs/getting_started).
+Detailed installation and setup guide [here](https://docs.getinfer.io/docs/reference/integrations/dbt).
 
 ### Requirements
 
@@ -104,7 +102,7 @@ You should be using dbt 1.2 or later.
 
 First you need to setup your Infer account and generate your api key.
 
-Read about how to do that [here](https://docs.getinfer.io/docs/reference/api).
+Read about how to do that [here](https://docs.getinfer.io).
 
 ### Install `dbt-infer`
 ```shell
